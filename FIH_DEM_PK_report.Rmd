@@ -1,0 +1,219 @@
+---
+title: "Study NBI-1070770-1747 Cohort X PK Report"
+output: html_document
+date: "2022-07-28"
+---
+
+Phase 1, Randomized, Placebo-Controlled, Double-Blind, Ascending Single-Dose and Multiple-Dose, and Food Effect Study to Evaluate the Safety, Tolerability, Pharmacokinetics, and Pharmacodynamics of NBI-1070770 in Healthy Subjects
+
+This is the PK report for Study NBI-1070770-1747 Cohort X. 
+
+Dose Level: XXX mg single dose
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+
+######  Set up
+
+rm(list = ls())
+
+# library
+library(tidyverse)
+library(magrittr)
+library(gridExtra)
+library(Hmisc)
+
+# load data
+getwd()
+
+
+
+# final parameter file from NCA
+a1 <- read.csv("Final_Parameters_Pivoted.csv",header = TRUE,stringsAsFactors = FALSE)
+
+# concentration data
+c1 <- read.csv("PKconc.csv", header = TRUE, stringsAsFactors = FALSE)
+
+# aesthetics for plotting
+size<- theme(axis.title.x=element_text(size=18), 
+             axis.text.x=element_text(size=14), 
+             axis.title.y=element_text(size=18),
+             axis.text.y=element_text(size=14), 
+             legend.text=element_text(size=14),
+             legend.title=element_text(size=18),
+             plot.title=element_text(size=18),
+             strip.text.x=element_text(size=18),
+             strip.text.y=element_text(size=18))
+
+```
+
+
+## PK Concentration
+
+Mean concentration versus time profiles for NBI-1070770 are presented in linear scale:
+
+```{r mean plot, echo=FALSE}
+p1<-ggplot(data=c1,
+           aes(x=TPTNOM,y=CONC, group=interaction(as.character(SUBJECT),as.character(DOSE)),color=as.character(DOSE)))+
+  
+  # individual lines, to remove comment out geom_line()+ with # in front
+  geom_line()+
+  
+  # mean and + SD lines
+  stat_summary(aes(group=as.character(DOSE), color=as.character((DOSE))),fun=mean,geom="line",size=1.2)+
+  stat_summary(aes(group=as.character(DOSE), color=as.character((DOSE))),fun.min=mean,fun.max=function(x) mean(x) + sd(x),geom="errorbar",size=1)+
+  
+  # labeling of axes and legend
+  labs(x="Nominal Time (hours)",
+       y="Concentration (ng/mL)",
+       color="Dose (mg)")+
+  # additional aesthetics
+  theme_bw()+
+  size
+
+p1
+
+```
+
+and log scale:
+
+```{r mean log plot, echo=FALSE}
+
+p1log<-p1+scale_y_continuous(trans='log10')
+p1log
+
+```
+
+Mean (SD) are represented in thick line(s) by dose. Individual profile are represented in thin lines by dose.
+
+
+Individual concentration versus time profiles for NBI-1070770 are presented in linear scale:
+
+```{r indiv plot, echo=FALSE}
+p1a<-ggplot(data=c1,
+            aes(x=TPTNOM,y=CONC))+
+  geom_line()+
+  geom_point()+
+  
+  # Dose on the right banner, subject ID on the top banner
+  facet_grid(as.character(DOSE)~as.character(SUBJECT))+
+  labs(x="Nominal Time (hours)",
+       y="Concentration (ng/mL)")+
+  theme_bw()
+p1a
+
+```
+
+and log scale:
+
+```{r indiv plot log, echo=FALSE}
+p1alog<-p1a+scale_y_continuous(trans='log10')
+p1alog
+
+```
+
+
+## PK Parameter
+
+
+Summary of PK parameters by dose is presented as follows:
+
+```{r parm summary, echo=FALSE}
+library(tidyr)
+library(knitr)
+
+# Functions
+# n count
+n3 = function(x){
+  (length(x)) - (sum(is.na(x)))
+}
+
+# Geometric mean
+gm_mean<-function(x,na.rm=T){
+  a <- mean(log(x[x>0]),na.rm=T)
+  exp(a)
+}
+
+# Geometric CV%
+geocv<-function(x, na.rm = TRUE){
+  sdlog <- sd(log(x[x > 0]), na.rm = na.rm)
+  geosd <- exp(sdlog)
+  100*(sqrt(exp(log(geosd)^2)-1))
+}
+
+# Rename and select PK parameters to report
+# Currently does not include dose normalized Cmax of AUC, to add in subsequent cohorts.
+pk1<-a1 %>% mutate("Cmax (ng/mL)" = Cmax,
+                   "tmax (h)" = tmax,
+                   "tlag (h)" = Tlag,
+                   "AUCtlast (ng*h/mL)" = AUC0_tlast,
+                   "AUCinf (ng*h/mL)" = AUC0_inf,
+                   "AUC%extrap (%)"=AUC_.Extrap_obs,
+                   "t1/2 (h)" = t1_2,
+                   "lambda_z (1/h)" = Lambda_z,
+                   "CL/F (L/h)" = CL_F,
+                   "Vz/F (L)" = Vz_F) %>% 
+  select(DOSE, SUBJECT,"Cmax (ng/mL)", "tmax (h)", "tlag (h)",
+         "AUCtlast (ng*h/mL)", "AUCinf (ng*h/mL)", "AUC%extrap (%)", 
+         "t1/2 (h)", "lambda_z (1/h)", "CL/F (L/h)", "Vz/F (L)")
+
+
+# make the table longer by placing parameters on one column and values on another
+pksum<-pivot_longer(data=pk1,
+                    cols= "Cmax (ng/mL)":"Vz/F (L)",
+                    names_to="Parameter",
+                    values_to="Value",
+                    values_drop_na=TRUE)
+
+
+# summarize by parameter and dose
+pksum1<-pksum %>% 
+  group_by(DOSE, Parameter)%>% 
+  #group_by(Parameter) %>% 
+  summarise_at(vars( Value), #"Cmax (ng/mL)":"Vz/F (L)"),
+            list(Mean = mean,
+                 Stdev = sd,
+                 Min = min,
+                 Median = median,
+                 Max = max,
+                 Gmean = gm_mean,
+                 "Gcv%" = geocv)) %>% 
+  rename("Dose (mg)" = DOSE) %>% 
+  arrange(Parameter)
+
+# ensures no conversion to scientific notation and 3 digits after decimal
+options(scipen = 999, digits=3)
+
+# output as a table in the report
+kable(pksum1)
+
+
+```
+
+
+
+
+## Exposures and NOAEL
+
+For all cohorts, dose increases will not exceed a 3.34-fold increase from the highest previously administered single dose and will not exceed the dose projected to achieve the mean steady-state maximum plasma concentration (Cmax) and area under the plasma concentration versus time curve (AUC) values associated with NOAEL in the male rats (most sensitive species) 28-day Good Laboratory Practices (GLP) toxicity studies (Cmax: 27,300 ng/mL; AUC: 121,000 ng×h/mL).
+
+
+The fold-change against the NOAEL based on the mean Cmax for the current dose level is:
+
+```{r noael cmax, echo=TRUE}
+
+  (27300-350.500)/350.500
+
+```
+
+
+The fold-change against the NOAEL based on the mean AUCinf for the current dose level is:
+
+```{r noael auc, echo=TRUE}
+
+  (121000-12981.297)/12981.297
+
+```
+
+
