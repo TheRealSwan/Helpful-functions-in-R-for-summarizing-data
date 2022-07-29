@@ -1,12 +1,12 @@
 ---
-title: "Study NBI-1070770-1747 Cohort X PK Report"
+title: "Study XXXX Cohort X PK Report"
 output: html_document
 date: "2022-07-28"
 ---
 
-Phase 1, Randomized, Placebo-Controlled, Double-Blind, Ascending Single-Dose and Multiple-Dose, and Food Effect Study to Evaluate the Safety, Tolerability, Pharmacokinetics, and Pharmacodynamics of NBI-1070770 in Healthy Subjects
+Insert study title
 
-This is the PK report for Study NBI-1070770-1747 Cohort X. 
+This is the PK report for Study XXXX Cohort X. 
 
 Dose Level: XXX mg single dose
 
@@ -51,7 +51,7 @@ size<- theme(axis.title.x=element_text(size=18),
 
 ## PK Concentration
 
-Mean concentration versus time profiles for NBI-1070770 are presented in linear scale:
+Mean concentration versus time profiles for COMPOUND are presented in linear scale:
 
 ```{r mean plot, echo=FALSE}
 p1<-ggplot(data=c1,
@@ -85,10 +85,10 @@ p1log
 
 ```
 
-Mean (SD) are represented in thick line(s) by dose. Individual profile are represented in thin lines by dose.
+Mean (+SD) are represented in thick line(s) by dose. Individual profile are represented in thin lines by dose.
 
 
-Individual concentration versus time profiles for NBI-1070770 are presented in linear scale:
+Individual concentration versus time profiles for COMPOUND are presented in linear scale:
 
 ```{r indiv plot, echo=FALSE}
 p1a<-ggplot(data=c1,
